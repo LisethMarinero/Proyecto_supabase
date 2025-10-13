@@ -32,34 +32,42 @@ def descargar_datos():
 
     archivo_salida = "era5_land_daily.nc"
 
-    # Solo hasta el día actual
     year = datetime.now().year
     month = datetime.now().month
     hoy = datetime.now().day
     dias_validos = [f"{d:02d}" for d in range(1, hoy + 1)]
 
-    c.retrieve(
-        "reanalysis-era5-land-timeseries",
-        {
-            "variable": [
-                "2m_temperature",
-                "total_precipitation",
-                "surface_pressure",
-                "surface_solar_radiation_downwards",
-            ],
-            "year": str(year),
-            "month": str(month),
-            "day": dias_validos,
-            "time": ["00:00"],
-            "format": "netcdf",
-        },
-        archivo_salida
-    )
-    print(f"✅ Datos descargados en {archivo_salida}")
-    return archivo_salida
+    try:
+        c.retrieve(
+            "reanalysis-era5-land-timeseries",
+            {
+                "variable": [
+                    "2m_temperature",
+                    "total_precipitation",
+                    "surface_pressure",
+                    "surface_solar_radiation_downwards",
+                ],
+                "year": str(year),
+                "month": str(month),
+                "day": dias_validos,
+                "time": ["00:00"],
+                "format": "netcdf",
+            },
+            archivo_salida
+        )
+        print(f"✅ Datos descargados en {archivo_salida}")
+        return archivo_salida
+
+    except Exception as e:
+        print(f"❌ Error descargando datos: {e}")
+        return None  # Evitar que falle la siguiente parte
 
 # --- PROCESAR Y CARGAR A SUPABASE ---
 def procesar_y_cargar(archivo):
+    if not archivo:
+        print("⚠️ No hay archivo para procesar. ETL detenido.")
+        return
+
     try:
         print("⚙️ Procesando archivo NetCDF...")
         ds = xr.open_dataset(archivo)
@@ -84,4 +92,4 @@ if __name__ == "__main__":
     print("🚀 Iniciando ETL diario...")
     archivo = descargar_datos()
     procesar_y_cargar(archivo)
-    print("🎯 ETL completado exitosamente.")
+    print("🎯 ETL completado.")
