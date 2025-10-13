@@ -6,7 +6,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 import xarray as xr
-from calendar import monthrange
 
 # --- CREAR .cdsapirc DINÁMICAMENTE ---
 cdsapi_path = os.path.expanduser("~/.cdsapirc")
@@ -33,11 +32,11 @@ def descargar_datos():
 
     archivo_salida = "era5_land_daily.nc"
 
-    # Calcular último día válido del mes
+    # Solo hasta el día actual
     year = datetime.now().year
     month = datetime.now().month
-    last_day = monthrange(year, month)[1]
-    dias_validos = [f"{d:02d}" for d in range(1, last_day+1)]
+    hoy = datetime.now().day
+    dias_validos = [f"{d:02d}" for d in range(1, hoy + 1)]
 
     c.retrieve(
         "reanalysis-era5-land-timeseries",
