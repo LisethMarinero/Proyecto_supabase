@@ -4,7 +4,7 @@ import pandas as pd
 import cdsapi
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
-from datetime import datetime
+from datetime import datetime, timedelta
 import xarray as xr
 
 # --- CREAR .cdsapirc DINÁMICAMENTE ---
@@ -32,10 +32,12 @@ def descargar_datos():
 
     archivo_salida = "era5_land_daily.nc"
 
-    year = datetime.now().year
-    month = datetime.now().month
-    hoy = datetime.now().day
-    dias_validos = [f"{d:02d}" for d in range(1, hoy + 1)]
+    # --- SOLAMENTE HASTA AYER ---
+    ayer = datetime.now() - timedelta(days=1)
+    year = ayer.year
+    month = ayer.month
+    dia_max = ayer.day
+    dias_validos = [f"{d:02d}" for d in range(1, dia_max + 1)]
 
     try:
         c.retrieve(
