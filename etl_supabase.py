@@ -7,6 +7,12 @@ from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 import xarray as xr
 
+# --- CREAR .cdsapirc DINÁMICAMENTE ---
+cdsapi_path = os.path.expanduser("~/.cdsapirc")
+with open(cdsapi_path, "w") as f:
+    f.write(f"url: {os.environ.get('CDSAPI_URL')}\n")
+    f.write(f"key: {os.environ.get('CDSAPI_KEY')}\n")
+
 # --- VARIABLES DE CONEXIÓN A SUPABASE ---
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -73,3 +79,4 @@ if __name__ == "__main__":
     archivo = descargar_datos()
     procesar_y_cargar(archivo)
     print("🎯 ETL completado exitosamente.")
+
