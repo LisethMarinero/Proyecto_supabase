@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 import xarray as xr
+from calendar import monthrange
 
 # --- CREAR .cdsapirc DINÁMICAMENTE ---
 cdsapi_path = os.path.expanduser("~/.cdsapirc")
@@ -32,6 +33,12 @@ def descargar_datos():
 
     archivo_salida = "era5_land_daily.nc"
 
+    # Calcular último día válido del mes
+    year = datetime.now().year
+    month = datetime.now().month
+    last_day = monthrange(year, month)[1]
+    dias_validos = [f"{d:02d}" for d in range(1, last_day+1)]
+
     c.retrieve(
         "reanalysis-era5-land-timeseries",
         {
@@ -41,9 +48,9 @@ def descargar_datos():
                 "surface_pressure",
                 "surface_solar_radiation_downwards",
             ],
-            "year": str(datetime.now().year),
-            "month": str(datetime.now().month),
-            "day": [f"{d:02d}" for d in range(1, 32)],
+            "year": str(year),
+            "month": str(month),
+            "day": dias_validos,
             "time": ["00:00"],
             "format": "netcdf",
         },
@@ -79,4 +86,3 @@ if __name__ == "__main__":
     archivo = descargar_datos()
     procesar_y_cargar(archivo)
     print("🎯 ETL completado exitosamente.")
-
