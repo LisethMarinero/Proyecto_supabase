@@ -23,19 +23,12 @@ with open(cdsapi_path, "w") as f:
     f.write(f"url: {os.environ.get('CDSAPI_URL')}\n")
     f.write(f"key: {os.environ.get('CDSAPI_KEY')}\n")
 
-# --- VARIABLES DE CONEXIÓN A SUPABASE ---
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT", "6543")
-DB_NAME = os.getenv("DB_NAME")
-
-# --- CONEXIÓN ---
+# --- CONEXIÓN A SUPABASE ---
 def crear_engine():
-    conexion_str = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    conexion_str = f"postgresql+psycopg2://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
     return create_engine(conexion_str, connect_args={'sslmode': 'require'})
 
-# --- DESCARGA DE DATOS COPERNICUS ERA5 LAND ---
+# --- DESCARGA DE DATOS POR AÑO ---
 def descargar_datos():
     print("🌍 Descargando datos desde Copernicus CDS...")
     c = cdsapi.Client()
@@ -80,7 +73,7 @@ def descargar_datos():
             print(f"✅ Datos descargados para {year}: {archivo_salida}")
             archivos.append(archivo_salida)
         except Exception as e:
-            print(f"❌ Error descargando datos para {year}: {e}")
+            print(f"⚠️ No se pudo descargar datos para {year}: {e}")
     
     return archivos
 
