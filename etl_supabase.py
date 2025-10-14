@@ -32,41 +32,46 @@ def descargar_datos():
 
     archivo_salida = "era5_land_daily.nc"
 
-    # --- SOLAMENTE HASTA AYER ---
-    ayer = datetime.now() - timedelta(days=1)
-    year = ayer.year
-    month = ayer.month
-    dia_max = ayer.day
-    dias_validos = [f"{d:02d}" for d in range(1, dia_max + 1)]
+    # Empieza con el mes actual menos 1
+    fecha = datetime.now() - timedelta(days=1)
+    year = fecha.year
+    month = fecha.month
 
-    try:
-        c.retrieve(
-    "reanalysis-era5-land-timeseries",
-    {
-        "variable": [
-            "2m_temperature",
-            "total_precipitation",
-            "surface_pressure",
-            "surface_solar_radiation_downwards",
-        ],
-        "year": str(year),
-        "month": str(month),
-        "day": dias_validos,
-        "time": ["00:00"],
-        "latitude": 13.7,
-        "longitude": -89.2,
-        "format": "netcdf",
-    },
-    archivo_salida
-)
+    # Retrocede hasta encontrar datos válidos
+    for _ in range(3):  # intentará hasta 3 meses hacia atrás
+        try:
+            dias_validos = [f"{d:02d}" for d in range(1, 29)]
+            c.retrieve(
+                "reanalysis-era5-land-timeseries",
+                {
+                    "variable": [
+                        "2m_temperature",
+                        "total_precipitation",
+                        "surface_pressure",
+                        "surface_solar_radiation_downwards",
+                    ],
+                    "year": str(year),
+                    "month": str(month),
+                    "day": dias_validos,
+                    "time": ["00:00"],
+                    "latitude": 13.7,
+                    "longitude": -89.2,
+                    "format": "netcdf",
+                },
+                archivo_salida
+            )
+            print(f"✅ Datos descargados en {archivo_salida} ({year}-{month:02d})")
+            return archivo_salida
+        except Exception as e:
+            print(f"⚠️ No hay datos para {year}-{month:02d}: {e}")
+            month -= 1
+            if month == 0:
+                month = 12
+                year -= 1
 
-        
-        print(f"✅ Datos descargados en {archivo_salida}")
-        return archivo_salida
+    print("❌ No se pudieron obtener datos de los últimos 3 meses.")
+    return None
 
-    except Exception as e:
-        print(f"❌ Error descargando datos: {e}")
-        return None  # Evitar que falle la siguiente parte
 
 # --- PROCESAR Y CARGAR A SUPABASE ---
 def procesar_y_cargar(archivo):
