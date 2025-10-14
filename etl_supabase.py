@@ -37,10 +37,11 @@ def descargar_datos():
     year = fecha.year
     month = fecha.month
 
-    # Retrocede hasta encontrar datos válidos
-    for _ in range(3):  # intentará hasta 3 meses hacia atrás
+    # Retrocede hasta encontrar datos válidos (máx 3 meses)
+    for intento in range(3):
         try:
             dias_validos = [f"{d:02d}" for d in range(1, 29)]
+            print(f"📅 Intentando descargar {year}-{month:02d}...")
             c.retrieve(
                 "reanalysis-era5-land-timeseries",
                 {
@@ -60,17 +61,20 @@ def descargar_datos():
                 },
                 archivo_salida
             )
-            print(f"✅ Datos descargados en {archivo_salida} ({year}-{month:02d})")
+            print(f"✅ Datos descargados correctamente ({year}-{month:02d})")
             return archivo_salida
+
         except Exception as e:
-            print(f"⚠️ No hay datos para {year}-{month:02d}: {e}")
+            print(f"⚠️ No hay datos disponibles para {year}-{month:02d}: {e}")
+            # Retroceder un mes
             month -= 1
             if month == 0:
                 month = 12
                 year -= 1
 
-    print("❌ No se pudieron obtener datos de los últimos 3 meses.")
+    print("❌ No se encontraron datos disponibles en los últimos 3 meses.")
     return None
+
 
 
 # --- PROCESAR Y CARGAR A SUPABASE ---
