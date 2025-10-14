@@ -53,6 +53,7 @@ def descargar_datos():
                 "month": str(month),
                 "day": dias_validos,
                 "time": ["00:00"],
+                "area": [13.7, -89.2, 13.6, -89.1],  # Coordenadas de San Salvador
                 "format": "netcdf",
             },
             archivo_salida
