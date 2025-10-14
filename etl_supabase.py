@@ -41,23 +41,26 @@ def descargar_datos():
 
     try:
         c.retrieve(
-            "reanalysis-era5-land-timeseries",
-            {
-                "variable": [
-                    "2m_temperature",
-                    "total_precipitation",
-                    "surface_pressure",
-                    "surface_solar_radiation_downwards",
-                ],
-                "year": str(year),
-                "month": str(month),
-                "day": dias_validos,
-                "time": ["00:00"],
-                "area": [13.7, -89.2, 13.6, -89.1],  # Coordenadas de San Salvador
-                "format": "netcdf",
-            },
-            archivo_salida
-        )
+    "reanalysis-era5-land-timeseries",
+    {
+        "variable": [
+            "2m_temperature",
+            "total_precipitation",
+            "surface_pressure",
+            "surface_solar_radiation_downwards",
+        ],
+        "year": str(year),
+        "month": str(month),
+        "day": dias_validos,
+        "time": ["00:00"],
+        "latitude": 13.7,
+        "longitude": -89.2,
+        "format": "netcdf",
+    },
+    archivo_salida
+)
+
+        
         print(f"✅ Datos descargados en {archivo_salida}")
         return archivo_salida
 
