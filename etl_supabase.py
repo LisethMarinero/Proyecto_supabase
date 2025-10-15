@@ -9,11 +9,11 @@ import xarray as xr
 
 # --- CONFIGURACIÓN MANUAL (solo para pruebas locales) ---
 os.environ["CDSAPI_URL"] = "https://cds.climate.copernicus.eu/api"
-os.environ["CDSAPI_KEY"] = "TU_EMAIL:TU_API_KEY"  # 🔹 reemplaza por tu clave real
+os.environ["CDSAPI_KEY"] = "da593dcf-84ac-4790-a785-9aca76da8fee"  # 🔹 Reemplaza por tu API key
 
-os.environ["DB_USER"] = "postgres"
-os.environ["DB_PASSWORD"] = "TU_CONTRASEÑA_SUPABASE"
-os.environ["DB_HOST"] = "TU_HOST_SUPABASE.supabase.co"
+os.environ["DB_USER"] = "postgres.gkzvbidocktfkwhvngpg"
+os.environ["DB_PASSWORD"] = "Hipopotamo123456"
+os.environ["DB_HOST"] = "aws-1-us-east-2.pooler.supabase.com"
 os.environ["DB_PORT"] = "6543"
 os.environ["DB_NAME"] = "postgres"
 
@@ -28,53 +28,42 @@ def crear_engine():
     conexion_str = f"postgresql+psycopg2://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
     return create_engine(conexion_str, connect_args={'sslmode': 'require'})
 
-# --- DESCARGA DE DATOS POR AÑO ---
-def descargar_datos():
-    print("🌍 Descargando datos desde Copernicus CDS...")
+# --- DESCARGA DE DATOS POR MES ---
+def descargar_datos(años):
+    print("🌍 Descargando datos desde Copernicus CDS (ERA5-Land)...")
     c = cdsapi.Client()
 
     años = range(2005, 2026)
     archivos = []
 
     for year in años:
-        archivo_salida = f"era5_land_{year}.nc"
-        try:
-            c.retrieve(
-                "reanalysis-era5-land-timeseries",
-                {
-                    "variable": [
-                        "2m_dewpoint_temperature",
-                        "2m_temperature",
-                        "surface_pressure",
-                        "total_precipitation",
-                        "surface_solar_radiation_downwards",
-                        "surface_thermal_radiation_downwards",
-                        "skin_temperature",
-                        "snow_cover",
-                        "soil_temperature_level_1",
-                        "soil_temperature_level_2",
-                        "soil_temperature_level_3",
-                        "soil_temperature_level_4",
-                        "volumetric_soil_water_level_1",
-                        "volumetric_soil_water_level_2",
-                        "volumetric_soil_water_level_3",
-                        "volumetric_soil_water_level_4",
-                        "10m_u_component_of_wind",
-                        "10m_v_component_of_wind"
-                    ],
-                    "latitude": 13.8,
-                    "longitude": -89.5,
-                    "date": f"{year}-01-01/{year}-12-31",
-                    "time": ["00:00"],
-                    "format": "netcdf",
-                },
-                archivo_salida
-            )
-            print(f"✅ Datos descargados para {year}: {archivo_salida}")
-            archivos.append(archivo_salida)
-        except Exception as e:
-            print(f"⚠️ No se pudo descargar datos para {year}: {e}")
-    
+        for month in range(1, 13):
+            archivo_salida = f"reanalysis-era5-land_{year}_{month:02d}.nc"
+            try:
+                c.retrieve(
+                    'reanalysis-era5-land',
+                    {
+                        'format': 'netcdf',
+                        'variable': [
+                            "2m_temperature",
+                            "2m_dewpoint_temperature",
+                            "surface_pressure",
+                            "total_precipitation"
+                            # 🔹 Agrega más variables si tu cuota lo permite
+                        ],
+                        'year': [str(year)],
+                        'month': [f"{month:02d}"],
+                        'day': [f"{d:02d}" for d in range(1, 32)],
+                        'time': ['00:00'],
+                        'area': [14, -90, 13, -89]  # [N, W, S, E] ejemplo El Salvador
+                    },
+                    archivo_salida
+                )
+                print(f"✅ Datos descargados para {year}-{month:02d}: {archivo_salida}")
+                archivos.append(archivo_salida)
+            except Exception as e:
+                print(f"⚠️ No se pudo descargar datos para {year}-{month:02d}: {e}")
+
     return archivos
 
 # --- PROCESAR Y CARGAR A SUPABASE ---
@@ -84,7 +73,7 @@ def procesar_y_cargar(archivos):
         return
 
     engine = crear_engine()
-    nombre_tabla = "era5_land_data"
+    nombre_tabla = "reanalysis_era5_land"
 
     for archivo in archivos:
         try:
@@ -105,6 +94,7 @@ def procesar_y_cargar(archivos):
 # --- FLUJO PRINCIPAL ---
 if __name__ == "__main__":
     print("🚀 Iniciando ETL completo (2005-2025)...")
-    archivos = descargar_datos()
+    años = range(2005, 2026)
+    archivos = descargar_datos(años)
     procesar_y_cargar(archivos)
     print("🎯 ETL completado con éxito.")
