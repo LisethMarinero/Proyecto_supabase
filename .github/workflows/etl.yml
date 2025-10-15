@@ -1,9 +1,9 @@
-name: ETL Diario a Supabase
+name: ETL diario a Supabase
 
 on:
   schedule:
-    - cron: "0 6 * * *"  # Se ejecuta todos los días a las 6 AM UTC
-  workflow_dispatch:      # Permite ejecución manual desde GitHub
+    # Ejecutar cada día a las 02:00 hora El Salvador (08:00 UTC)
+    - cron: '0 8 * * *'
 
 jobs:
   ejecutar-etl:
