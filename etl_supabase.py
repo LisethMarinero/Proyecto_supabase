@@ -5,12 +5,12 @@ import pandas as pd
 import xarray as xr
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 
 # --- CONFIGURACIÓN ---
 os.environ["CDSAPI_URL"] = "https://cds.climate.copernicus.eu/api"
-os.environ["CDSAPI_KEY"] = "da593dcf-84ac-4790-a785-9aca76da8fee"  # 🔹 Asegúrate de poner tu UID:APIKEY correcto
+os.environ["CDSAPI_KEY"] = "da593dcf-84ac-4790-a785-9aca76da8fee"  # 🔹 Pon tu API key aquí SIN <UID>:
 
 os.environ["DB_USER"] = "postgres.gkzvbidocktfkwhvngpg"
 os.environ["DB_PASSWORD"] = "Hipopotamo123456"
@@ -24,7 +24,7 @@ with open(cdsapi_path, "w") as f:
     f.write(f"url: {os.environ['CDSAPI_URL']}\n")
     f.write(f"key: {os.environ['CDSAPI_KEY']}\n")
 
-# --- CONEXIÓN SUPABASE ---
+# --- CONEXIÓN A SUPABASE ---
 def crear_engine():
     conexion = (
         f"postgresql+psycopg2://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@"
@@ -32,7 +32,12 @@ def crear_engine():
     )
     return create_engine(conexion, connect_args={'sslmode': 'require'})
 
-# --- DESCARGA DEL ÚLTIMO DÍA ---
+# --- OBTENER ÚLTIMO DÍA DISPONIBLE ---
+def obtener_ultimo_dia_disponible():
+    # ERA5-Land tiene retraso, usualmente datos disponibles hasta ayer
+    return datetime.utcnow() - timedelta(days=1)
+
+# --- DESCARGAR DATOS DEL DÍA ---
 def descargar_ultimo_dia(fecha):
     año, mes, dia = fecha.year, fecha.month, fecha.day
     archivo = f"reanalysis-era5-land_{año}_{mes:02d}_{dia:02d}.nc"
@@ -68,7 +73,7 @@ def descargar_ultimo_dia(fecha):
         print(f"⚠️ Error descargando {archivo}: {e}")
         return None
 
-# --- PROCESAR Y CARGAR ---
+# --- PROCESAR Y CARGAR A SUPABASE ---
 def procesar_y_cargar(archivo):
     if not archivo or not os.path.exists(archivo):
         print("⚠️ No hay archivo válido para procesar.")
@@ -99,8 +104,8 @@ def procesar_y_cargar(archivo):
 
 # --- EJECUCIÓN PRINCIPAL ---
 if __name__ == "__main__":
-    print("🚀 Iniciando ETL último día ERA5-Land...")
-    fecha_ultimo_dia = datetime(2025, 10, 10)  # 🔹 Cambia a la última fecha que quieras
+    print("🚀 Iniciando ETL del último día disponible ERA5-Land...")
+    fecha_ultimo_dia = obtener_ultimo_dia_disponible()
     archivo = descargar_ultimo_dia(fecha_ultimo_dia)
     procesar_y_cargar(archivo)
     print("🎯 ETL completado con éxito.")
